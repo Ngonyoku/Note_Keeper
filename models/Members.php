@@ -3,9 +3,9 @@
 class Members {
 
     // The Table Fields
-    private $id;
-    private $first_name;
-    private $last_name;
+    public $id;
+    public $first_name;
+    public $last_name;
 
     //The database Connection
     private $conn;
@@ -17,20 +17,81 @@ class Members {
 
     //Get All Members
     public function read() {
-        $sqlQuery = 'SELECT
-                        id,
-                        first_name,
-                        last_name
-                    FROM 
-                        members'; //Request the data from the table
+        $stmt = //Prepare the statement
+            $this->conn->prepare(
+                'SELECT 
+                    id,first_name,last_name 
+                FROM 
+                    note_keeper.members'
+            )
+        ;
+        $stmt->execute();//Execute the Query
 
-        //Prepare the statement
-        $stmt = $this->conn->prepare($sqlQuery);
+        // return $stmt;//Return the Data 
 
-        //Execute the Query
-        $stmt->execute();
+        if ($stmt->rowCount() > 0) {
+            $membersArray = array();
+            $membersArray['members'] = array();
+            while($tuple = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                extract($tuple);
 
-        //Return the Data 
-        return $stmt;
+                $memberItem = array('id' => $id, 'first_name' => $first_name, 'last_name' => $last_name);
+                array_push($membersArray['members'], $memberItem);
+            }
+
+            return $membersArray;
+        } else {
+            return null;
+        }
+    }
+
+    //Returns only one Member
+    public function readById() {
+        $stmt = //Prepate the Statement
+            $this->conn->prepare(
+                'SELECT 
+                    id,first_name,last_name 
+                FROM 
+                    note_keeper.members 
+                WHERE 
+                    id = :id 
+                LIMIT 
+                    0, 1'
+            )
+        ;
+        
+        $stmt->bindParam(':id', $this->id);//Bind the Parameters
+        $stmt->execute(); //Execute the statemet
+        $tuple = $stmt->fetch(PDO::FETCH_ASSOC);//Fetch the record and store it as an Associative Array
+        //Populate the Properties
+        $this->id = $tuple['id'];
+        $this->first_name = $tuple['first_name'];
+        $this->last_name = $tuple['last_name'];
+    }
+
+    //Create a Member
+    public function create() {
+        $stmt = //Prepare the statement
+            $this->conn->prepare(
+                'INSERT INTO 
+                    note_keeper.members
+                SET 
+                    first_name = ?,
+                    last_name = ?'
+            )
+        ;
+
+        //Clean the Data
+        $this->first_name = htmlspecialchars(stripcslashes(strip_tags($this->first_name)));
+        $this->last_name = htmlspecialchars(stripcslashes(strip_tags($this->last_name)));
+
+        //Bind the Parameters
+        $stmt->bindParam(1, $this->first_name);
+        $stmt->bindParam(2, $this->last_name);
+
+        if ($stmt->execute()) return true;
+
+        printf("Error: %s.\n", $stmt->error);
+        return false;
     }
 }
