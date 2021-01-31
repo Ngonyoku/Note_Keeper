@@ -94,4 +94,32 @@ class Members {
         printf("Error: %s.\n", $stmt->error);
         return false;
     }
+
+    public function updateAll() {
+        $stmt = 
+            $this->conn->prepare(
+                'UPDATE 
+                    note_keeper.members
+                SET
+                    first_name = :first_name,
+                    last_name = :last_name
+                WHERE
+                    id = :id'
+            )
+        ;
+
+        //Clean the Data
+        $this->first_name = htmlspecialchars(stripcslashes(strip_tags($this->first_name)));
+        $this->last_name = htmlspecialchars(stripcslashes(strip_tags($this->last_name)));
+
+        //Bind the Parameters
+        $stmt->bindParam(':id', $this->id);
+        $stmt->bindParam(':first_name', $this->first_name);
+        $stmt->bindParam(':last_name', $this->last_name);
+
+        if($stmt->execute()) return true;
+
+        printf("Error: %s.\n", $stmt->error);
+        return false;
+    }
 }
