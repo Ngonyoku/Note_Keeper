@@ -6,6 +6,7 @@ class Members {
     public $id;
     public $first_name;
     public $last_name;
+    public $username;
 
     //The database Connection
     private $conn;
@@ -20,7 +21,10 @@ class Members {
         $stmt = //Prepare the statement
             $this->conn->prepare(
                 'SELECT 
-                    id,first_name,last_name 
+                    id,
+                    first_name,
+                    last_name,
+                    username 
                 FROM 
                     note_keeper.members'
             )
@@ -35,7 +39,13 @@ class Members {
             while($tuple = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 extract($tuple);
 
-                $memberItem = array('id' => $id, 'first_name' => $first_name, 'last_name' => $last_name);
+                $memberItem = array(
+                            'member_id' => $id,
+                            'first_name' => $first_name,
+                            'last_name' => $last_name,
+                            'username' => $username
+                        )
+                ;
                 array_push($membersArray['members'], $memberItem);
             }
 
@@ -63,6 +73,7 @@ class Members {
         $stmt->bindParam(':id', $this->id);//Bind the Parameters
         $stmt->execute(); //Execute the statemet
         $tuple = $stmt->fetch(PDO::FETCH_ASSOC);//Fetch the record and store it as an Associative Array
+        
         //Populate the Properties
         $this->id = $tuple['id'];
         $this->first_name = $tuple['first_name'];
@@ -121,5 +132,29 @@ class Members {
 
         printf("Error: %s.\n", $stmt->error);
         return false;
+    }
+
+    //Deletes a Member
+    public function delete() {
+        $stmt = 
+            $this->conn->prepare(
+                'DELETE FROM 
+                    note_keeper.members
+                WHERE
+                    id = :id'
+            )
+        ;
+
+        $this->id = htmlspecialchars(stripcslashes(strip_tags($this->id)));
+
+        $stmt->bindParam(':id', $this->id);
+       //Execute the Statement
+       if($stmt->execute()) {
+            return true;
+        }
+        
+        printf("Error: %s\n", $stmt->error);
+        return false;
+        
     }
 }
